@@ -1,3 +1,4 @@
 dist
 bull
 node_modules
+node_modules/.bin
