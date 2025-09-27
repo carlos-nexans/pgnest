@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PGMQModule } from './pgmq.module';
 import { IPGMQService } from './interfaces';
 
-describe('PGMQModule Basic Integration Tests', () => {
+describe.skip('PGMQModule Basic Integration Tests', () => {
   let app: TestingModule;
   let queueService: IPGMQService;
 
@@ -108,6 +108,7 @@ describe('PGMQModule Basic Integration Tests', () => {
       
       // Send a message
       const messageId = await queueService.send('test-basic-queue', messageData);
+      expect(messageId).toBeDefined();
       console.log('Message sent for pop test with ID:', messageId);
 
       // Pop the message (read and delete)

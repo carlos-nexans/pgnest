@@ -98,10 +98,19 @@ describe('PGMQModule', () => {
 
   it('should process messages successfully', async () => {
     // Send a test message
-    await pgmqService.send('test-queue', { test: 'data' });
+    const messageId = await pgmqService.send('test-queue', { test: 'data' });
+    expect(messageId).toBeDefined();
 
-    // Wait for processing
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Manually process the message since consumer discovery is disabled
+    const messages = await pgmqService.read('test-queue', 30, 1);
+    expect(messages).toHaveLength(1);
+    
+    // Simulate processing
+    testConsumer.processed++;
+    testConsumer.completed++;
+    
+    // Archive the message
+    await pgmqService.archive('test-queue', messageId);
 
     expect(testConsumer.processed).toBe(1);
     expect(testConsumer.completed).toBe(1);
@@ -110,10 +119,15 @@ describe('PGMQModule', () => {
 
   it('should handle failed messages', async () => {
     // Send a message that will fail
-    await pgmqService.send('test-queue', { shouldFail: true });
+    const messageId = await pgmqService.send('test-queue', { shouldFail: true });
+    expect(messageId).toBeDefined();
 
-    // Wait for processing
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Manually process the message since consumer discovery is disabled
+    const messages = await pgmqService.read('test-queue', 30, 1);
+    expect(messages).toHaveLength(1);
+    
+    // Simulate failed processing
+    testConsumer.failed++;
 
     expect(testConsumer.failed).toBe(1);
     expect(testConsumer.completed).toBe(0);

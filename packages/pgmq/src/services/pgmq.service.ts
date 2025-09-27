@@ -27,11 +27,28 @@ export class PGMQService implements IPGMQService, OnModuleDestroy {
 
   async createQueue(queueName: string): Promise<void> {
     try {
-      await this.pool.query('SELECT pgmq.create($1)', [queueName]);
-      
+      // Try to create the queue, ignore if it already exists
+      try {
+        await this.pool.query('SELECT pgmq.create($1)', [queueName]);
+      } catch (createError: any) {
+        // If it's a duplicate constraint error, ignore it
+        if (!createError.message?.includes('duplicate') && !createError.message?.includes('already exists')) {
+          throw createError;
+        }
+        // Queue already exists, continue
+      }
+
       // Create DLQ
       const dlqName = this.getDLQName(queueName);
-      await this.pool.query('SELECT pgmq.create($1)', [dlqName]);
+      try {
+        await this.pool.query('SELECT pgmq.create($1)', [dlqName]);
+      } catch (createError: any) {
+        // If it's a duplicate constraint error, ignore it
+        if (!createError.message?.includes('duplicate') && !createError.message?.includes('already exists')) {
+          throw createError;
+        }
+        // DLQ already exists, continue
+      }
     } catch (error) {
       this.logger.error(`Failed to create queue ${queueName}`, error);
       throw error;
@@ -57,7 +74,7 @@ export class PGMQService implements IPGMQService, OnModuleDestroy {
         'SELECT * FROM pgmq.send_batch($1, $2::jsonb[])',
         [queueName, messages.map(msg => JSON.stringify(msg))],
       );
-      return result.rows.map(row => parseInt(row.send_batch, 10));
+      return result.rows.map(row => Number(row.send_batch));
     } catch (error) {
       this.logger.error(
         `Failed to send batch messages to queue ${queueName}`,
