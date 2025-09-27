@@ -96,9 +96,9 @@ export class PGMQService implements IPGMQService, OnModuleDestroy {
       );
 
       return result.rows.map((row) => ({
-        msg_id: row.msg_id,
+        msg_id: Number(row.msg_id),
         message: row.message,
-        read_ct: row.read_ct,
+        read_ct: Number(row.read_ct),
         maxRetries: 3, // Default value since PGMQ doesn't have this concept
         enqueued_at: row.enqueued_at,
         vt: row.vt,
@@ -125,9 +125,9 @@ export class PGMQService implements IPGMQService, OnModuleDestroy {
 
       const row = result.rows[0];
       return {
-        msg_id: row.msg_id,
+        msg_id: Number(row.msg_id),
         message: row.message,
-        read_ct: row.read_ct,
+        read_ct: Number(row.read_ct),
         maxRetries: 3, // Default value since PGMQ doesn't have this concept
         enqueued_at: row.enqueued_at,
         vt: row.vt,
@@ -258,10 +258,10 @@ export class PGMQService implements IPGMQService, OnModuleDestroy {
       );
 
       return {
-        waiting: metrics.queue_length || 0,
+        waiting: Number(metrics.queue_length) || 0,
         active: 0, // Not directly available from metrics
-        completed: metrics.total_messages - metrics.queue_length || 0,
-        failed: dlqResult.rows[0]?.queue_length || 0,
+        completed: Number(metrics.total_messages) - Number(metrics.queue_length) || 0,
+        failed: Number(dlqResult.rows[0]?.queue_length) || 0,
         delayed: 0, // Not supported by PGMQ
         paused: 0, // Not supported by PGMQ
       };

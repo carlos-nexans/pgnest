@@ -1,17 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PGMQModule } from './pgmq.module';
 import { IPGMQService, PGMQMessage } from './interfaces';
-import { QueueProcessor, Processor, OnFailed, OnGlobalQueueCompleted } from './decorators';
-import { Job, ProcessOptions } from './decorators/types';
 
-// Test processor class
-@QueueProcessor('test-queue')
+// Test processor class - simplified without decorators
 export class TestProcessor {
   private processedJobs: PGMQMessage[] = [];
   private failedJobs: PGMQMessage[] = [];
   private completedJobs: PGMQMessage[] = [];
 
-  @Processor({ name: 'test-job' } as ProcessOptions)
   async process(job: PGMQMessage) {
     console.log(`Processing job: ${job.msg_id} with data:`, job.message);
     this.processedJobs.push(job);
@@ -28,13 +24,11 @@ export class TestProcessor {
     return { processed: true, jobId: job.msg_id };
   }
 
-  @OnFailed()
   async onFailed(job: PGMQMessage, error: Error) {
     console.log(`Job failed: ${job.msg_id}, error:`, error.message);
     this.failedJobs.push(job);
   }
 
-  @OnGlobalQueueCompleted()
   async onCompleted(job: PGMQMessage) {
     console.log(`Job completed: ${job.msg_id}`);
     this.completedJobs.push(job);
@@ -53,7 +47,7 @@ export class TestProcessor {
   }
 }
 
-describe.skip('PGMQModule Integration Tests', () => {
+describe('PGMQModule Integration Tests', () => {
   let app: TestingModule;
   let queueService: IPGMQService;
   let testProcessor: TestProcessor;
@@ -158,6 +152,7 @@ describe.skip('PGMQModule Integration Tests', () => {
       expect(results).toHaveLength(3);
       results.forEach(result => {
         expect(result).toBeDefined();
+        expect(typeof result).toBe('number');
         console.log('Message sent with ID:', result);
       });
 
@@ -184,22 +179,22 @@ describe.skip('PGMQModule Integration Tests', () => {
 
   describe('Queue Management', () => {
     it('should create and drop queues', async () => {
-      const queueName = 'test-management-queue';
+      const queueName = `test-management-queue-${Date.now()}`;
       
       // Create queue
       console.log(`Creating queue: ${queueName}`);
-      const createResult = await queueService.createQueue(queueName);
-      expect(createResult).toBeDefined();
+      await queueService.createQueue(queueName);
       
       // Send a message to verify queue works
       const messageData = { test: 'queue management' };
       const sendResult = await queueService.send(queueName, messageData);
       expect(sendResult).toBeDefined();
+      expect(typeof sendResult).toBe('number');
       
       // Drop queue
       console.log(`Dropping queue: ${queueName}`);
-      const dropResult = await queueService.dropQueue(queueName);
-      expect(dropResult).toBeDefined();
+      await queueService.dropQueue(queueName);
+      console.log('Queue dropped successfully');
     });
 
     it('should handle queue operations gracefully', async () => {

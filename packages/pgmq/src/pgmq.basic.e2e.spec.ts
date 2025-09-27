@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PGMQModule } from './pgmq.module';
 import { IPGMQService } from './interfaces';
 
-describe.skip('PGMQModule Basic Integration Tests', () => {
+describe('PGMQModule Basic Integration Tests', () => {
   let app: TestingModule;
   let queueService: IPGMQService;
 
@@ -46,6 +46,7 @@ describe.skip('PGMQModule Basic Integration Tests', () => {
       const messageId = await queueService.send('test-basic-queue', messageData);
       
       expect(messageId).toBeDefined();
+      expect(typeof messageId).toBe('number');
       console.log('Message sent with ID:', messageId, 'type:', typeof messageId);
 
       // Read the message
@@ -77,6 +78,7 @@ describe.skip('PGMQModule Basic Integration Tests', () => {
       expect(messageIds).toHaveLength(3);
       messageIds.forEach(id => {
         expect(id).toBeDefined();
+        expect(typeof id).toBe('number');
         console.log('Message sent with ID:', id);
       });
 
@@ -109,13 +111,15 @@ describe.skip('PGMQModule Basic Integration Tests', () => {
       // Send a message
       const messageId = await queueService.send('test-basic-queue', messageData);
       expect(messageId).toBeDefined();
+      expect(typeof messageId).toBe('number');
       console.log('Message sent for pop test with ID:', messageId);
 
       // Pop the message (read and delete)
       const poppedMessage = await queueService.pop('test-basic-queue');
       expect(poppedMessage).toBeDefined();
-      expect(poppedMessage.msg_id).toBe(messageId);
-      expect(poppedMessage.message).toEqual(messageData);
+      expect(poppedMessage).not.toBeNull();
+      expect(poppedMessage!.msg_id).toBe(messageId);
+      expect(poppedMessage!.message).toEqual(messageData);
       console.log('Message popped successfully:', poppedMessage);
 
       // Try to pop again (should return null)
@@ -134,7 +138,7 @@ describe.skip('PGMQModule Basic Integration Tests', () => {
 
   describe('Queue Management', () => {
     it('should create and drop queues', async () => {
-      const queueName = 'test-management-queue';
+      const queueName = `test-management-queue-${Date.now()}`;
       
       // Create queue
       console.log(`Creating queue: ${queueName}`);
@@ -144,6 +148,7 @@ describe.skip('PGMQModule Basic Integration Tests', () => {
       const messageData = { test: 'queue management' };
       const messageId = await queueService.send(queueName, messageData);
       expect(messageId).toBeDefined();
+      expect(typeof messageId).toBe('number');
       console.log('Message sent to management queue with ID:', messageId);
       
       // Drop queue
