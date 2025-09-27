@@ -3,6 +3,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { PGMQModule } from '@pgnest/pgmq';
 import { MessageProducer } from './message.producer';
 import { MessageConsumer } from './message.consumer';
+import { DLQMonitor } from './dlq.monitor';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MessageConsumer } from './message.consumer';
     },
     MessageProducer,
     MessageConsumer,
+    DLQMonitor,
   ],
 })
 export class AppModule {}

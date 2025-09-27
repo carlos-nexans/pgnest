@@ -63,6 +63,11 @@ export class MessageConsumer implements OnModuleInit {
       // Simulate some processing time
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Simulate occasional failures for testing DLQ (fail every 7th message)
+      if (messageData.id % 7 === 0) {
+        throw new Error(`Simulated processing failure for message #${messageData.id}`);
+      }
+      
       // Archive the message after successful processing
       await this.queueService.archive('example-queue', message.msg_id);
       
