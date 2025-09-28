@@ -7,7 +7,7 @@ This example demonstrates how to use `@pgnest/pgmq` to implement a simple produc
 - Producer service that emits a message every 5 seconds using cron
 - Consumer service that processes messages and logs them
 - Dead Letter Queue (DLQ) monitor that shows failed message statistics every 30 seconds
-- Simulated message failures for testing DLQ functionality
+- 50% random message failure rate for testing DLQ functionality
 - PostgreSQL with PGMQ extension running in Docker
 
 ## Prerequisites
@@ -36,8 +36,8 @@ npm run start:dev
 ## How it works
 
 1. The `MessageProducer` service uses `@nestjs/schedule` to emit a message every 5 seconds to the `example-queue`
-2. The `MessageConsumer` service processes messages from the queue and logs them
-3. Every 7th message is intentionally failed to demonstrate DLQ functionality
+2. The `MessageConsumer` service uses PGMQ decorators to automatically process messages from the queue
+3. Each message has a 50% chance of failure to demonstrate DLQ functionality
 4. If processing fails, the message is moved to a dead-letter queue after max retries
 5. The `DLQMonitor` service runs every 30 seconds to show statistics about failed messages
 6. Messages are persisted in PostgreSQL, so no messages are lost if the application crashes
@@ -45,7 +45,7 @@ npm run start:dev
 ## Structure
 
 - `src/message.producer.ts`: Cron job that produces messages
-- `src/message.consumer.ts`: Queue processor that consumes messages
+- `src/message.consumer.ts`: Queue processor using @QueueProcessor and @Processor decorators
 - `src/dlq.monitor.ts`: Dead letter queue monitor with cron job
 - `src/app.module.ts`: Main application module with PGMQ configuration
 - `docker-compose.yml`: PostgreSQL setup with PGMQ extension
@@ -57,4 +57,4 @@ The application includes a DLQ monitor that runs every 30 seconds and displays:
 - Details of recent failed messages including error messages and retry attempts
 - Queue statistics (waiting, completed, failed message counts)
 
-Watch the console output to see the DLQ monitoring in action!
+Watch the console output to see the DLQ monitoring in action! With the 50% failure rate, you'll see messages building up in the dead letter queue, and the monitor will show detailed statistics about failed messages.

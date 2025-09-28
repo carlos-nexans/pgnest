@@ -18,11 +18,16 @@ export class MessageProducer implements OnModuleInit {
     try {
       // Create the queue if it doesn't exist
       await this.queueService.createQueue('example-queue');
-      this.queueCreated = true;
       this.logger.log('Queue "example-queue" created successfully');
+      
+      // Create the DLQ if it doesn't exist
+      await this.queueService.createQueue('example-queue_dlq');
+      this.logger.log('DLQ "example-queue_dlq" created successfully');
+      
+      this.queueCreated = true;
     } catch (error) {
-      this.logger.error('Failed to create queue "example-queue"', error);
-      // Continue anyway, the queue might already exist
+      this.logger.error('Failed to create queue or DLQ', error);
+      // Continue anyway, the queues might already exist
       this.queueCreated = true;
     }
   }

@@ -55,29 +55,40 @@ export class MessageConsumer implements OnModuleInit {
   }
 
   private async processMessage(message: PGMQMessage) {
-    try {
-      const messageData = message.message as Message;
+    const messageData = message.message as Message;
+    
+    this.logger.log(`🔄 Processing message #${messageData.id}: ${messageData.text}`);
+    
+    // Simulate some processing time
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Simulate 50% failure rate for testing DLQ
+    if (Math.random() < 0.5) {
+      this.logger.error(`❌ Failed to process message #${message.msg_id}: Simulated processing failure for message #${messageData.id}`);
       
-      this.logger.log(`🔄 Processing message #${messageData.id}: ${messageData.text}`);
+      // Send to dead letter queue directly since the message is already in flight
+      const dlqMessage = {
+        originalMessage: messageData,
+        originalQueue: 'example-queue',
+        error: {
+          message: `Simulated processing failure for message #${messageData.id}`,
+          stack: new Error().stack,
+        },
+        attemptsMade: message.read_ct || 1,
+        originalMsgId: message.msg_id,
+      };
       
-      // Simulate some processing time
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Send to DLQ using the service
+      await this.queueService.send('example-queue_dlq', dlqMessage);
       
-      // Simulate occasional failures for testing DLQ (fail every 7th message)
-      if (messageData.id % 7 === 0) {
-        throw new Error(`Simulated processing failure for message #${messageData.id}`);
-      }
-      
-      // Archive the message after successful processing
+      // Delete from original queue - use archive instead since delete has function ambiguity
       await this.queueService.archive('example-queue', message.msg_id);
-      
-      this.logger.log(`✅ Successfully processed message #${messageData.id}`);
-      
-    } catch (error) {
-      this.logger.error(`❌ Failed to process message #${message.msg_id}:`, error);
-      
-      // Move to dead letter queue if max retries exceeded
-      await this.queueService.moveToDeadLetter('example-queue', message.msg_id, error as Error, 3);
+      return;
     }
+    
+    // Archive the message after successful processing
+    await this.queueService.archive('example-queue', message.msg_id);
+    
+    this.logger.log(`✅ Successfully processed message #${messageData.id}`);
   }
 }
