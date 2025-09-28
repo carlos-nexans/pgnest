@@ -1,6 +1,13 @@
+[![Project Status: Concept – Minimal or no implementation has been done yet, or the repository is only intended to be a limited example, demo, or proof-of-concept.](https://www.repostatus.org/badges/latest/concept.svg)](https://www.repostatus.org/#concept)
+
+
+![NestJS](https://img.shields.io/badge/nestjs-%23E0234E.svg?style=for-the-badge&logo=nestjs&logoColor=white)
+
 # PGNest
 
 Drop-in replacements for NestJS common functionality using PostgreSQL.
+
+This project is in construction. DO NOT USE YET.
 
 ## PGMQ Module
 
